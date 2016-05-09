@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+		<link rel="stylesheet" type="text/css" href="analytics.css" />
+		
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		
+		<title>Ex Libris - Analytics Demo</title>
+		
+		<script type="text/javascript">
+		
+			// PLACE YOUR API KEY HERE
+			var apiKey = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+			
+			// DO NOT CHANGE
+			var baseURL = "https://api-na.hosted.exlibrisgroup.com/";
+
+			// LOAD GOOGLE CHARTS
+	  		google.charts.load('current', {'packages':['corechart']});
+	        google.charts.setOnLoadCallback(startDrawing);
+
+	        /* GET RESULTS FROM THE ANALYTICS API AND EMBED THE CHART IN THE WEBPAGE
+	        
+	        INPUT PARAMETERS
+	        ================
+	        	* path: the Analytics report path taken directly from the Alma Analytics environment URL
+	        	* tableName: the DIV element in your webpage
+	        	* tableStyle: 
+	        		1: pie chart
+	        		2: column chart
+	        		3: area chart
+	        		4: bar chart
+	        	* nameColumn: the API XML column in which the key is found
+	        	* dataColumn: the API XML column in which the values are found
+	        	* tableProperties: 
+        			title: name to be displayed as the chart title
+					 nameColumnTitle: key title 
+					 dataColumnTitle: value title
+	        
+				Note that both the chart height and width are fixed values, currently set to 500 and 400 respectively.
+	        */
+			function getResults(path, tableName, tableStyle, nameColumn, dataColumn, tableProperties) {
+		        
+				var urllink = baseURL + "almaws/v1/analytics/reports?path=" + path + "&limit=1000&apikey=" + apiKey;
+			
+				$.ajax({
+					type: "GET",
+					dataType: "xml",
+					url: urllink,
+					
+				  	success: function(analyticsData, textStatus, jqXHR) {
+				  		
+				  		var data = new google.visualization.DataTable();
+				        data.addColumn("string", tableProperties.nameColumnTitle);
+				        data.addColumn("number", tableProperties.dataColumnTitle);
+				        
+				        var userGroup;
+				  		$(analyticsData).find("Row").each(function(i1, row) {
+				  			name = "";
+				  			
+				  			if (($(row).find(nameColumn) != null) && ($(row).find(nameColumn).text().trim() != "")) {
+				  				name = $(row).find(nameColumn).text();
+					  			data.addRows([
+					  			               [name, parseInt($(row).find(dataColumn).text())]
+					  			             ]);
+				  			}
+				  		});
+				  		
+				  		var options = {
+								"title" : tableProperties.title,
+								"titleTextStyle" : {
+								      color: "333333",
+								      fontName: "Arial",
+								      fontSize: 24
+							    },
+				                "width" : 500,
+				                "height" : 400,
+				                "legend" : "none",
+				                "backgroundColor" : "#F0F5FF"
+							};
+
+				  		var chart;
+				  		
+				  		if (tableStyle == 1) {
+				  			options = {
+									"title" : tableProperties.title,
+									"titleTextStyle" : {
+									      color: "333333",
+									      fontName: "Arial",
+									      fontSize: 24
+								    },
+					                "width" : 500,
+					                "height" : 400,
+					                "legend" : "none",
+					                "backgroundColor" : "#F0F5FF",
+					                "pieHole" : 0.3
+								};
+				  			
+				  			console.log("Pie Chart");
+				  			
+				  			chart = new google.visualization.PieChart(document.getElementById(tableName));
+				  			
+				  		} else if (tableStyle == 2) {
+				  			console.log("Column Chart");
+
+				  			chart = new google.visualization.ColumnChart(document.getElementById(tableName));
+				  			
+				  		} else if (tableStyle == 3) {
+				  			console.log("Area Chart");
+
+				  			chart = new google.visualization.AreaChart(document.getElementById(tableName));
+				  			
+				  		} else if (tableStyle == 4) {
+				  			console.log("Bar Chart");
+
+				  			chart = new google.visualization.BarChart(document.getElementById(tableName));
+				  		}
+				  		
+		               	chart.draw(data, options);				  	
+					},
+				  	
+				  	error: function(jqXHR, textStatus, errorThrown) {
+						alert("Something is not working boss...");
+					}
+				});		
+			}
+
+	        
+	        function startDrawing() {
+	        	getResults(
+						"%2Fshared%2FAlma%20University%2FFulfillment%2FLoans%20and%20Lost%20By%20Patron%20Group",
+						"testchart", 
+						1, 
+						"Column1", 
+						"Column2", 
+						{
+						 title : "Loans by Patron Group",
+						 nameColumnTitle : "User Group",
+						 dataColumnTitle : "Loans"
+						}
+					);
+	        }
+		</script>
+	</head>
+	
+	<body onload="">
+		<div class="toptoolbar">
+			<div class="logo"><img src="header-logo.png" height="32px" /></div>
+		</div>
+		
+		<div class="mainbody">
+			<div id="testchart" class="googlechartdiv"></div>
+		</div>
+	</body>
+</html>
